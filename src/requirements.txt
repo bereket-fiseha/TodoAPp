@@ -1,0 +1,5 @@
+groq
+ollama
+pandas
+django
+pillow

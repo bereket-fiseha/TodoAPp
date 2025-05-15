@@ -1,0 +1,272 @@
+{% extends "todoapp/base.html" %} {% block content %}
+
+
+<!--Add and edit modal-->
+
+
+<!-- Modal -->
+<div class="modal fade" id="todo-create-update-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLongTitle">Add Todo</h5>
+        
+      </div>
+      <div class="modal-body">
+  <!--form start-->
+<form>
+  {% csrf_token %}
+  <div class="form-group row">
+    <label for="inputEmail3" class="col-sm-3 col-form-label">Title</label>
+    <div class="col-sm-9">
+      <input type="email" class="form-control" id="title">
+    </div>
+  </div>
+  <div class="form-group row mt-3">
+    <label for="inputPassword3" class="col-sm-3 col-form-label">Description</label>
+    <div class="col-sm-9">
+      <textarea type="text" class="form-control" id="description" ></textarea>
+    </div>
+  </div>
+
+    <div class="form-group row mt-3">
+    <label for="step_by_step_instruct" class="col-sm-3 col-form-label">Detail Tasks</label>
+    <div class="col-sm-9">
+      <textarea type="text" class="form-control" id="detail_tasks"></textarea>
+    </div>
+  </div>
+  <div class="form-group row mt-3">
+    <div class="col-sm-3"></div>
+    <div class="col-sm-6">
+    </div>
+    
+    <div class="col-sm-3"></div>
+  </div>
+</form>
+
+  <!--form end-->
+      </div>
+      <div class="modal-footer">
+        <button type="button" onclick="closeTodoModal()"class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick="createTodo()">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!--end Add and edit modal-->
+<div class="container mt-5">
+  <div class="row">
+    <div class="col-md-2">
+<div style="margin-top:170px">
+
+     <label ><b>Completed:</b></label>    <div class="mt-2" style="background-color:lightgreen; width:50px; height:50px;">
+   
+      </div>
+      <div class="mt-2">
+          <b>In Progress:</b><div style="background-color:lightblue; width:50px; height:50px; text-align:center; margin-top:20px">
+      
+      
+      </div>
+      </div>
+</div>
+    
+    
+    </div>
+
+    <div class="col-md-8">
+      <h2 class="ml-5">Todo List</h3>
+<!--filter by date and status-->
+        <div class='row mt-5 m-2'>
+          <div class="col-md-5"><button class="btn btn-secondary" onclick="openTodoModal()"><i class="fa fa-plus-circle"></i></div>
+          
+          <div class="col-md-6">
+            <b>Date:</b><input type="date"    id="date-filter" name="date-filter">
+              <div style="display: inline; margin-left:20px" class="ml-3">    
+            
+          <b>Is Completed:  </b> <input type="checkbox" style="width:18px;height:15px" id="status-filter" name="status-filter">
+             </div>
+               <div style="display:inline ;margin-left:10px" class="ml-3">   <button class="btn btn-secondary"><i class="fa fa-filter fa-xl"></i></button></div>
+        
+          
+          </div>
+          
+       
+        </div>
+<!--filter by date and status-->
+      <div class="todo-container">
+    
+        {%for todo in list_of_todo%}
+        <input value="{{todo.id}}" name="todo_id" id="todo_id" hidden />
+        <div class="row mt-2">
+            <div class="col-md-1"></div>
+          <div class="col-md-1 ml-3 mt-5"><h3>{{forloop.counter}}.</h3></div>
+<!--todo card start-->
+          <div class="card todo-card mt-3  " style="max-width: 540px;max-height:150px">
+            <div class="row no-gutters">
+              <div
+                class="col-md-4"
+                style="text-align: center; background-color: {% if todo.is_completed %}lightgreen{% else %}lightblue{% endif %}; color: white"
+              >
+                <p class="pt-4">{{todo.Date}}</p>
+              </div>
+              <div class="col-md-8">
+                <div class="card-body">
+                  <div class="row">
+                    <h6 class="card-title">Title: {{todo.title}}</h6>
+
+                 
+                         <div class="row">
+<div class="col-md-5">
+
+  <a href="javascript:;" onclick="return completeTodo({{todo.pk}})">complete task</a>
+</div>
+<div class="col-md-7">
+
+     <p class="card-text">
+                      <small class="text-muted">updated at :{{todo.updated_at|date:"Y-m-d"}}</small>
+                    </p>
+</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!--todo card end-->
+          <div class="col-md-1  mt-4">
+                <button class="btn btn-secondary mb-2" onclick="updateTodo({{todo.id}})">
+              <i class="fa fa-edit" area-hidden="true"></i>
+            </button>
+            <button class="btn btn-secondary" onclick="deleteTodo({{todo.id}})">
+              <i class="fa fa-trash" area-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+
+        {%endfor%}
+      </div>
+    </div>
+
+    <div class="col-md-2"></div>
+  </div>
+</div>
+
+
+{%endblock%} {% block jsscripts %}
+<script>
+  function deleteTodo(id) {
+
+$.ajax({
+url:"{%url 'todoapp:todo_delete'%}",
+headers: {
+        "X-CSRFToken": $("input[name=csrfmiddlewaretoken]").val(),
+      },
+type:"POST",
+data:{
+id:id,
+},
+success:function(result){
+console.log(result)
+if(result="success"){
+
+  window.location.reload();
+}
+
+},
+error:function(){
+
+
+},
+
+
+})
+
+
+
+
+
+
+
+
+
+
+  }
+
+function completeTodo(id){
+
+$.ajax({
+url:"{%url 'todoapp:todo_complete'%}",
+headers: {
+        "X-CSRFToken": $("input[name=csrfmiddlewaretoken]").val(),
+      },
+type:"POST",
+data:{
+
+id:id,
+},
+success:function(result){
+console.log("res",result)
+if(result=="success"){
+toastr.success('Todo Status Changed successfully!');
+setTimeout(function() {
+  
+  window.location.reload();
+},2500)
+
+}
+},
+error:function(){
+
+
+},
+
+
+})
+
+
+}  
+function createTodo(){
+
+$.ajax({
+url:"{%url 'todoapp:todo_create'%}",
+headers: {
+        "X-CSRFToken": $("input[name=csrfmiddlewaretoken]").val(),
+      },
+type:"POST",
+data:{
+title:$("#title").val(),
+
+description:$("#description").val(),
+
+step_by_step_execution:$("#detail_tasks").val(),
+
+},
+success:function(result){
+console.log(result)
+if(result=="success"){
+toastr.success('Todo created successfully');
+setTimeout(() => {
+  window.location.reload()
+}, "2500");
+}
+},
+error:function(){
+
+
+},
+
+
+})
+}
+  function openTodoModal(){
+
+    $("#todo-create-update-modal").modal("show")
+  }
+  
+  function closeTodoModal(){
+
+    $("#todo-create-update-modal").modal("hide")
+  }
+</script>
+
+{% endblock %}

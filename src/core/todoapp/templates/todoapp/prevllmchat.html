@@ -1,0 +1,318 @@
+{% extends "todoapp/base.html" %}
+{%block content%}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-2">
+     
+        </div>
+        <div class="col-md-10">
+            <!-- Chat Container -->
+<div class="card">
+
+<div class="card-header">
+    <div class="row">
+        <div class="col-md-3"></div>
+        <div class="col">
+         <b> Multimodal :</b>
+          <input
+            type="checkbox"
+            id="multi-modal-select"
+            onclick="multiModalCheckbox(this);"
+          />
+
+          <span class="ml-3" style="margin-right: 40px"></span>
+        <b>Model:</b>  
+
+          <select name="choose-model" id="choose-model">
+       
+            <option value="llama3.2">LLama 3.2 :(Ollama)</option>
+            
+            <option value="llama-3.3-70b-versatile@groq">
+                <b>LLama 3:Groq-Text</b>
+              </option>
+  
+              <option value="mistral-saba-24b@groq">
+                Mistral:Groq-Text
+              </option>
+            <option value="llama-4-scout@groq-vision">
+              <b> llama-4-scout:Groq-Vision</b>
+            </option>
+            <option value="llama-4-maverick@groq-vision">
+              llama-4-maverick:Groq-Vision
+            </option>
+
+            <option value="meditron">Meditron</option>
+            <option value="medllama2">MedLLama</option>
+            <option value="biomistral">BioMistral:HF(API)</option>
+            <option value="deepseek">DeepSeek:HF(Transformer)</option>
+
+            <option value="biobert">BioBert:HF</option>
+          </select>
+        </div>
+      </div>
+
+</div>
+<div class="card-body">
+    <div class="chat-container" style="max-width: 100%; border: 1px solid #ccc; border-radius: 5px; overflow: hidden; position: relative;">
+        <div id="chat-log" class="chat-log">
+            <!-- Messages will be displayed here -->
+        </div>
+        <div class="chat-input">
+            {%csrf_token%}
+           
+            <input type="text" id="message-input" placeholder="Type your message...">
+            
+            <input type="text" id="user-prompt"  hidden>
+            <button id="send-button">Send</button>
+            <button id="record-button"><i class="fas fa-microphone"></i></button>
+            <label for="file-upload" class=" upload-button"><i class="fas fa-upload"></i></labled>
+
+            <input type="file" id="file-upload" style="display: none;">
+                   </div>
+        <div id="loading-spinner" style="display: none;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+</div>
+
+          
+        </div>
+    </div>
+</div>
+
+<style>
+    .chat-container {
+        width: 100%;
+        margin: 0 auto;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        overflow: hidden;
+        position: relative; /* Add this to contain the spinner */
+    }
+
+    .chat-log {
+        height: 580px;
+        padding: 10px;
+        overflow-y: scroll;
+        background-color: #f9f9f9;
+    }
+
+    .chat-input {
+        display: flex;
+        padding: 10px;
+        background-color: #eee;
+    }
+
+    .chat-input input {
+        flex-grow: 1;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+
+    .chat-input button,
+    .upload-button {
+        padding: 8px 12px;
+        margin-left: 10px;
+        border: none;
+        background-color: #007bff;
+        color: white;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .chat-input button:hover,
+    .upload-button:hover {
+        background-color: #0056b3;
+    }
+
+    .message {
+        padding: 8px;
+        margin-bottom: 5px;
+        border-radius: 5px;
+        clear: both;
+    }
+
+    .user-message {
+        background-color: #e2f7cb;
+        float: right;
+    }
+
+    .bot-message {
+        background-color: #fff;
+        float: left;
+        position: relative; /* Add this to contain the spinner */
+    }
+
+    #loading-spinner {
+        position: absolute;
+        top: 50%;
+        left: 10%;
+        transform: translate(-50%, -50%);
+        z-index: 10; /* Ensure it's on top of other elements */
+    }
+</style>
+
+<script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+
+
+{%endblock%}
+{%block jsscripts%}
+<script>
+    const $chatLog = $('#chat-log');
+    const $messageInput = $('#message-input');
+    const $sendButton = $('#send-button');
+    const $recordButton = $('#record-button');
+    const $fileUpload = $('#file-upload');
+    const $loadingSpinner = $('#loading-spinner');
+    const $conversationList = $('#conversation-list'); // Add this line
+
+    let mediaRecorder;
+    let audioChunks = [];
+
+    $sendButton.on('click', sendMessage);
+
+    $messageInput.keypress(function (event) {
+            
+        if (event.key === 'Enter') {
+            
+            $("#user-prompt").val($messageInput.val())
+            sendMessage();
+
+        }
+    });
+
+    $recordButton.on('click', function () {
+        if (mediaRecorder && mediaRecorder.state === "recording") {
+            stopRecording();
+        } else {
+            startRecording();
+        }
+    });
+
+    $fileUpload.on('change', function () {
+        const file = this.files[0];
+        if (file) {
+            displayMessage('File uploaded: ' + file.name, 'user');
+            // You can add code here to handle file uploads to a server
+        }
+    });
+    function getLLMResponse(){
+
+        const formData = new FormData();
+        console.log( $("#user-prompt").val())
+        formData.append("user_prompt", $("#user-prompt").val());
+        formData.append("model",$("#choose-model").val())
+       // formData.append("multi-modal-select",0)
+        
+        $loadingSpinner.show();
+        $.ajax({
+          type: "POST",
+          url: "{%url 'todoapp:get_ai_response'%}",
+          headers: {
+            "X-CSRFToken": $("input[name=csrfmiddlewaretoken]").val(),
+          },
+          data: formData,
+          //for form data use this contenttype ,processData
+          contentType: false,
+          processData: false,
+          success: function (result) {
+
+            response= marked.parse(result);
+            displayMessage(response, 'bot');
+          
+            $loadingSpinner.hide();
+      
+           // $("#llm_diagnosis_output").text(marked.parse(result));
+    
+    //        document.getElementById('llm_diagnosis_output').innerHTML =
+       //     marked.parse(result);
+         //   var langTarget = $("#language_target").val();
+          },
+    
+          error: function (error) {
+            console.log(error);
+          },
+        });
+    
+      }
+
+
+
+    function startRecording() {
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    displayMessage('<audio controls><source src="' + audioUrl + '" type="audio/wav"></audio>', 'user');
+                };
+
+                mediaRecorder.start();
+                $recordButton.html('<i class="fas fa-stop"></i>');
+            })
+            .catch(error => {
+                console.error('Error accessing microphone:', error);
+                displayMessage('Error accessing microphone.', 'bot');
+            });
+    }
+
+    function stopRecording() {
+        mediaRecorder.stop();
+        $recordButton.html('<i class="fas fa-microphone"></i>');
+    }
+
+    function sendMessage() {
+
+        const messageText = $messageInput.val().trim();
+        if (messageText) {
+            displayMessage(messageText, 'user');
+            addConversationToList(messageText); // Add this line
+            $messageInput.val('');
+
+            // Show loading spinner
+         //   $loadingSpinner.show();
+    getLLMResponse()
+            // Simulate a bot response
+      //      setTimeout(() => {
+     //           displayMessage('This is a simulated response from the bot.', 'bot');
+     //           addConversationToList('This is a simulated response from the bot.'); // And this line
+                // Hide loading spinner after response
+       //         $loadingSpinner.hide();
+         //   }, 2000);
+      
+      
+        }
+    }
+
+    function displayMessage(message, sender) {
+        const $messageDiv = $('<div>').addClass('message').addClass(sender + '-message').html(message);
+        $chatLog.append($messageDiv);
+
+        // Scroll to the bottom of the chat log
+        $chatLog.scrollTop($chatLog[0].scrollHeight);
+    }
+
+    function addConversationToList(message) {
+        const now = new Date();
+        const dateString = now.toLocaleDateString();
+        const timeString = now.toLocaleTimeString();
+        const listItemText = `[${dateString} ${timeString}] ${message}`;
+        const $listItem = $('<li>').text(listItemText);
+        $conversationList.append($listItem);
+    }
+
+</script>
+{%endblock%}
