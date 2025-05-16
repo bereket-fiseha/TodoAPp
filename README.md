@@ -10,6 +10,7 @@ A django based todoapp that has features such as adding new todo, edit ,delete a
 
 
 ## Edit Todo
+![todo edit](https://github.com/user-attachments/assets/72ab4000-7228-4a65-b6d6-f45e22c9e4f6)
 
 
 ## Filter Todo 
