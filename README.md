@@ -2,7 +2,21 @@
 A django based todoapp that has features such as adding new todo, edit ,delete and filter based on date and status.
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
-## Todo List
+![Django](https://img.shields.io/badge/Django-092E20?style=flat&logo=django&logoColor=white)
+
+## Deployment
+
+To run  this project run
+
+```bash
+  cd src
+  .\venv\scripts\activate
+  pip install -r requiremnts.txt
+  cd core
+  python manage.py runserver
+```
+
+  ## Todo List
 - List of todos,
 ![todolist](https://github.com/user-attachments/assets/8931c7ad-6933-476f-ab55-d19d55b99bc7)
 
