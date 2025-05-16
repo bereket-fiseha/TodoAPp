@@ -11,7 +11,7 @@ To run  this project run
 ```bash
   cd src
   .\venv\scripts\activate
-  pip install -r requiremnts.txt
+  pip install -r requirements.txt
   cd core
   python manage.py runserver
 ```
