@@ -70,3 +70,4 @@ venv/
 ENV/
 env/
 .venv/
+snapshot/

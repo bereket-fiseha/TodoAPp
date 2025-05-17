@@ -1,13 +1,22 @@
 import random
 import sqlite3
 import time
+import json
+from django.core.serializers import serialize
+
 import pandas as pd
 from groq import Groq
 from django.shortcuts import render
 from django.http import HttpResponse
 from .models import Todo
+import os
+from dotenv import load_dotenv
 import datetime
 from django.views.generic import ListView
+
+load_dotenv()
+groq_key=os.environ.get("Groq_API_KEY")
+
 # Create your views here.
 class TodoListView(ListView):
     model=Todo
@@ -36,7 +45,7 @@ def llm_generic_response(system_prompt,user_prompt,model,stream=False,max_token=
      if "groq" in model:
           model=model.split("@")[0]
           #the prompt for diagnosis ,but we will add for plan as well
-          client = Groq(  api_key="asd")
+          client = Groq( api_key=groq_key)
           completion = client.chat.completions.create(
                 model=model,
                 messages=[
@@ -67,6 +76,17 @@ def todo_create(request):
      except Exception as e:
           print("exeption is",e)
           return HttpResponse(status=500)
+
+
+def todo_get(request,id:int):
+    try:
+     todo=Todo.objects.get(pk=id)
+    except:
+        return HttpResponse(status=500)
+    todo_json = serialize('json', [todo,])
+    return HttpResponse(todo_json, content_type='application/json',status=200)
+    
+    
 
 def todo_update(request):
      id=request.POST.get("id")
@@ -118,11 +138,13 @@ def text_to_sql(model,user_prompt):
      system_prompt="""
      You are an expert in converting English questions to SQL query!
      All tables start with todoapp_, hence if the table name is student ,add prefix to it and call it todoapp_student.
-The SQL database has the name Todo and has the following columns -Title ,Description,Date, StepByStepExecution,is_completed  \n\n For example,\n 
-Example 1- How many entries of records are present the SQL command will be something like this SELECT COUNT(*) FROM STUDENT;
-\nExample 2- Tell me all the students studying in Data science class?.
-the SQL command will be something like this SELECT * FROM STUDENT where CLASS="Data Science";
-\nExample 2-  Fetch all todos with status completed
+The SQL database has table called Todo and has the following columns -Title ,Description,Date, StepByStepExecution,is_completed  \n\n For example,\n 
+only select  with the first  three columns. Gien student table with name,class,age,gender,address columns lets see the following examples.
+ Example 1- get all students ,the sql command will be something like Select (name,class,age) from student.
+
+
+Example 2- How many entries of records are present the SQL command will be something like this SELECT COUNT(*) FROM STUDENT;
+\\nExample 3-  Fetch all todos with status completed
 the SQL command will be something like this SELECT (title,description ,date) FROM todo where is_completed="True";
 also the sql code should not have '''in the beginning or end and sql word in the command
 
@@ -135,10 +157,11 @@ def sql_to_text(model,user_prompt):
      model="mistral-saba-24b@groq"
      system_prompt="""
 
-           "You are a formatting assistant.format and structure this in a table format!
+           "You are a formatting assistant.format and structure this in a nice structured  format!
             trim also any column value of the table with length greater than 25 characters and add ...
             For example: if column value  is "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" make it 
             "aaaaaaaaaaaaaaaaaaaaaaaaa..."
+     
            only responde the table format ,dont add any comments or text
            give enough space between the columns
             """

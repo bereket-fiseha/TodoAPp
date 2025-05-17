@@ -7,6 +7,8 @@ urlpatterns = [
     path('ai/chat',views.llm_chat ,name="llm_chat"),
     path('ai/get_response',views.get_ai_response ,name="get_ai_response"),
     
+    path('todo/<int:id>',views.todo_get ,name="todo_get"),
+    
     path('todo/create',views.todo_create ,name="todo_create"),
     
     path('todo/update',views.todo_update ,name="todo_update"),

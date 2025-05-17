@@ -9,7 +9,7 @@
   <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLongTitle">Add Todo</h5>
+        <h5 class="modal-title" id="exampleModalLongTitle">Todo Add/Edit</h5>
         
       </div>
       <div class="modal-body">
@@ -17,9 +17,10 @@
 <form>
   {% csrf_token %}
   <div class="form-group row">
+        <input type="text" class="form-control" id="todo_id" hidden>
     <label for="inputEmail3" class="col-sm-3 col-form-label">Title</label>
     <div class="col-sm-9">
-      <input type="email" class="form-control" id="title">
+      <input type="text" class="form-control" id="title">
     </div>
   </div>
   <div class="form-group row mt-3">
@@ -77,7 +78,7 @@
       <h2 class="ml-5">Todo List</h3>
 <!--filter by date and status-->
         <div class='row mt-5 m-2'>
-          <div class="col-md-5"><button class="btn btn-secondary" onclick="openTodoModal()"><i class="fa fa-plus-circle"></i></div>
+          <div class="col-md-5"><button class="btn btn-secondary" onclick="openTodoModalForCreate()"><i class="fa fa-plus-circle"></i></div>
           
           <div class="col-md-6">
             <b>Date:</b><input type="date"    id="date-filter" name="date-filter">
@@ -134,7 +135,7 @@
           </div>
           <!--todo card end-->
           <div class="col-md-1  mt-4">
-                <button class="btn btn-secondary mb-2" onclick="updateTodo({{todo.id}})">
+                <button class="btn btn-secondary mb-2" onclick="openTodoModalForEdit({{todo.id}})">
               <i class="fa fa-edit" area-hidden="true"></i>
             </button>
             <button class="btn btn-secondary" onclick="deleteTodo({{todo.id}})">
@@ -258,7 +259,38 @@ error:function(){
 
 })
 }
-  function openTodoModal(){
+function openTodoModalForEdit(id){
+$.ajax({
+url:'/todo/'+id,
+headers: {
+        "X-CSRFToken": $("input[name=csrfmiddlewaretoken]").val(),
+      },
+type:"GET",
+data:{
+},
+success:function(result){
+console.log(result)
+
+todo=result[0]["fields"] 
+console.log("todo",todo)
+ $("#todo_id").val(todo.id)
+  $("#title").val(todo.title)
+  $("#description").val(todo.description)
+  $("#detail_tasks").val(todo.step_by_step_execution)
+  $("#todo-create-update-modal").modal("show")
+
+
+},
+error:function(){
+
+
+},
+
+
+})
+    $("#todo-create-update-modal").modal("show")
+  }
+  function openTodoModalForCreate(){
 
     $("#todo-create-update-modal").modal("show")
   }
