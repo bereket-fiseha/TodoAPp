@@ -1,6 +1,6 @@
 set -o errexit
 
-pip install -r src/core/requirements.txt
+pip install -r src/requirements.txt
 
 
 

@@ -32,7 +32,7 @@ def todo_list(request):
   if not is_compeleted:
        #is_compeleted=False
        pass
-  list_of_todo=Todo.objects.filter(Date=date_filter)
+  list_of_todo=Todo.objects.all().order_by('-Date')
   return render(request,"todoapp/todo_list.html",context={"list_of_todo":list_of_todo,"date_filter":date_filter,"is_completed":is_compeleted})          
 
 
@@ -202,7 +202,7 @@ def execute_db_command(sql_command,db,command_type):
      try:
       if command_type=="read":
         conn=sqlite3.connect(db)
-        df=pd.read_sql_query(sql_command,conn)
+       # df=pd.read_sql_query(sql_command,conn)
     
         curr=conn.cursor()
         data=curr.execute(sql_command)
